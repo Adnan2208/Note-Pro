@@ -33,6 +33,7 @@ const createNote = async (req, res) => {
       folder: folderId || null,
       title,
       content,
+      images: req.body.images || [],
       tags: tags || [],
       isPinned: isPinned || false
     });
@@ -126,6 +127,7 @@ const updateNote = async (req, res) => {
     // Update fields
     if (title !== undefined) note.title = title;
     if (content !== undefined) note.content = content;
+    if (req.body.images !== undefined) note.images = req.body.images;
     if (tags !== undefined) note.tags = tags;
     if (isPinned !== undefined) note.isPinned = isPinned;
 

@@ -22,6 +22,14 @@ const noteSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    images: [
+      {
+        id: String,
+        data: String, // Base64 encoded image
+        mimeType: String,
+        name: String
+      }
+    ],
     isPinned: {
       type: Boolean,
       default: false

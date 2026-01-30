@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { notesApi, foldersApi } from '../api/api';
+import NoteEditor from './NoteEditor';
 
 function Notes({ accessCode, onLogout }) {
   const [currentFolderId, setCurrentFolderId] = useState('root');
@@ -10,16 +11,14 @@ function Notes({ accessCode, onLogout }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Modal states
-  const [showNoteModal, setShowNoteModal] = useState(false);
-  const [showFolderModal, setShowFolderModal] = useState(false);
+  // Editor states
+  const [showEditor, setShowEditor] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
+  
+  // Folder modal states
+  const [showFolderModal, setShowFolderModal] = useState(false);
   const [editingFolder, setEditingFolder] = useState(null);
-  const [noteForm, setNoteForm] = useState({ title: '', content: '' });
   const [folderName, setFolderName] = useState('');
-
-  // View note modal
-  const [viewingNote, setViewingNote] = useState(null);
 
   useEffect(() => {
     fetchFolderContents();
@@ -145,51 +144,34 @@ function Notes({ accessCode, onLogout }) {
     }
   };
 
-  const handleCreateNote = async () => {
-    if (!noteForm.title.trim() || !noteForm.content.trim()) {
-      setError('Title and content are required');
-      return;
-    }
-
+  const handleSaveNote = async (noteData) => {
     try {
-      const response = await notesApi.createNote(accessCode, {
-        ...noteForm,
-        folderId: currentFolderId === 'root' ? null : currentFolderId
-      });
-
-      if (response.success) {
-        setNotes([response.note, ...notes]);
-        setNoteForm({ title: '', content: '' });
-        setShowNoteModal(false);
-      } else {
-        setError(response.message);
-      }
-    } catch (err) {
-      setError('Failed to create note');
-    }
-  };
-
-  const handleUpdateNote = async () => {
-    if (!noteForm.title.trim() || !noteForm.content.trim()) {
-      setError('Title and content are required');
-      return;
-    }
-
-    try {
-      const response = await notesApi.updateNote(accessCode, editingNote._id, noteForm);
-      if (response.success) {
-        setNotes(notes.map(n => n._id === editingNote._id ? response.note : n));
-        setNoteForm({ title: '', content: '' });
-        setEditingNote(null);
-        setShowNoteModal(false);
-        if (viewingNote && viewingNote._id === editingNote._id) {
-          setViewingNote(response.note);
+      if (editingNote) {
+        // Update existing note
+        const response = await notesApi.updateNote(accessCode, editingNote._id, noteData);
+        if (response.success) {
+          setNotes(notes.map(n => n._id === editingNote._id ? response.note : n));
+          setShowEditor(false);
+          setEditingNote(null);
+        } else {
+          throw new Error(response.message);
         }
       } else {
-        setError(response.message);
+        // Create new note
+        const response = await notesApi.createNote(accessCode, {
+          ...noteData,
+          folderId: currentFolderId === 'root' ? null : currentFolderId
+        });
+        if (response.success) {
+          setNotes([response.note, ...notes]);
+          setShowEditor(false);
+        } else {
+          throw new Error(response.message);
+        }
       }
     } catch (err) {
-      setError('Failed to update note');
+      setError(err.message || 'Failed to save note');
+      throw err;
     }
   };
 
@@ -200,9 +182,6 @@ function Notes({ accessCode, onLogout }) {
       const response = await notesApi.deleteNote(accessCode, note._id);
       if (response.success) {
         setNotes(notes.filter(n => n._id !== note._id));
-        if (viewingNote && viewingNote._id === note._id) {
-          setViewingNote(null);
-        }
       } else {
         setError(response.message);
       }
@@ -229,15 +208,14 @@ function Notes({ accessCode, onLogout }) {
     }
   };
 
-  const openNoteModal = (note = null) => {
-    if (note) {
-      setEditingNote(note);
-      setNoteForm({ title: note.title, content: note.content });
-    } else {
-      setEditingNote(null);
-      setNoteForm({ title: '', content: '' });
-    }
-    setShowNoteModal(true);
+  const openNoteEditor = (note = null) => {
+    setEditingNote(note);
+    setShowEditor(true);
+  };
+
+  const closeNoteEditor = () => {
+    setShowEditor(false);
+    setEditingNote(null);
   };
 
   const openFolderModal = (folder = null) => {
@@ -319,7 +297,7 @@ function Notes({ accessCode, onLogout }) {
               New Folder
             </button>
             <button
-              onClick={() => openNoteModal()}
+              onClick={() => openNoteEditor()}
               className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -410,7 +388,7 @@ function Notes({ accessCode, onLogout }) {
                     )}
                   </div>
                   <button
-                    onClick={() => setViewingNote(note)}
+                    onClick={() => openNoteEditor(note)}
                     className="text-black hover:underline font-medium truncate"
                   >
                     {note.title}
@@ -431,7 +409,7 @@ function Notes({ accessCode, onLogout }) {
                     </svg>
                   </button>
                   <button
-                    onClick={() => openNoteModal(note)}
+                    onClick={() => openNoteEditor(note)}
                     className="p-1 text-gray-400 hover:text-black transition-colors"
                     title="Edit"
                   >
@@ -455,55 +433,14 @@ function Notes({ accessCode, onLogout }) {
         )}
       </main>
 
-      {/* Note Modal */}
-      {showNoteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-black">
-                {editingNote ? 'Edit Note' : 'New Note'}
-              </h2>
-              <button
-                onClick={() => { setShowNoteModal(false); setEditingNote(null); }}
-                className="text-gray-400 hover:text-black"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="p-6">
-              <input
-                type="text"
-                placeholder="Note title"
-                value={noteForm.title}
-                onChange={(e) => setNoteForm({ ...noteForm, title: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-black mb-4"
-              />
-              <textarea
-                placeholder="Write your note..."
-                value={noteForm.content}
-                onChange={(e) => setNoteForm({ ...noteForm, content: e.target.value })}
-                rows={10}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-black resize-none"
-              />
-            </div>
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
-              <button
-                onClick={() => { setShowNoteModal(false); setEditingNote(null); }}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={editingNote ? handleUpdateNote : handleCreateNote}
-                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
-              >
-                {editingNote ? 'Update' : 'Create'}
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Note Editor */}
+      {showEditor && (
+        <NoteEditor
+          note={editingNote}
+          onSave={handleSaveNote}
+          onClose={closeNoteEditor}
+          accessCode={accessCode}
+        />
       )}
 
       {/* Folder Modal */}
@@ -546,46 +483,6 @@ function Notes({ accessCode, onLogout }) {
               >
                 {editingFolder ? 'Rename' : 'Create'}
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* View Note Modal */}
-      {viewingNote && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-black truncate pr-4">
-                {viewingNote.title}
-              </h2>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => { openNoteModal(viewingNote); setViewingNote(null); }}
-                  className="text-gray-400 hover:text-black p-1"
-                  title="Edit"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => setViewingNote(null)}
-                  className="text-gray-400 hover:text-black"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div className="p-6 overflow-y-auto flex-1">
-              <p className="text-gray-600 text-sm mb-4">
-                Last updated: {formatDate(viewingNote.updatedAt)}
-              </p>
-              <div className="prose prose-sm max-w-none whitespace-pre-wrap text-gray-800">
-                {viewingNote.content}
-              </div>
             </div>
           </div>
         </div>
