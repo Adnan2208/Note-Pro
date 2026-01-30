@@ -3,12 +3,13 @@ const API_BASE_URL = 'http://localhost:5000/api';
 // Auth API calls
 export const authApi = {
   // Create a new access code
-  createAccessCode: async () => {
+  createAccessCode: async (accessCode) => {
     const response = await fetch(`${API_BASE_URL}/auth/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ accessCode }),
     });
     return response.json();
   },
@@ -21,6 +22,71 @@ export const authApi = {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ accessCode }),
+    });
+    return response.json();
+  },
+};
+
+// Folders API calls
+export const foldersApi = {
+  // Get folder contents (subfolders and notes)
+  getFolderContents: async (accessCode, folderId = 'root') => {
+    const response = await fetch(`${API_BASE_URL}/folders/${folderId}/contents`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-access-code': accessCode,
+      },
+    });
+    return response.json();
+  },
+
+  // Get all folders
+  getAllFolders: async (accessCode) => {
+    const response = await fetch(`${API_BASE_URL}/folders/all`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-access-code': accessCode,
+      },
+    });
+    return response.json();
+  },
+
+  // Create a new folder
+  createFolder: async (accessCode, folderData) => {
+    const response = await fetch(`${API_BASE_URL}/folders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-access-code': accessCode,
+      },
+      body: JSON.stringify(folderData),
+    });
+    return response.json();
+  },
+
+  // Update a folder
+  updateFolder: async (accessCode, folderId, folderData) => {
+    const response = await fetch(`${API_BASE_URL}/folders/${folderId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-access-code': accessCode,
+      },
+      body: JSON.stringify(folderData),
+    });
+    return response.json();
+  },
+
+  // Delete a folder
+  deleteFolder: async (accessCode, folderId) => {
+    const response = await fetch(`${API_BASE_URL}/folders/${folderId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-access-code': accessCode,
+      },
     });
     return response.json();
   },

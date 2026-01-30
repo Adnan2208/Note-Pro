@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const { v4: uuidv4 } = require('uuid');
 
 const userSchema = new mongoose.Schema(
   {
@@ -7,7 +6,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      default: () => uuidv4().split('-')[0].toUpperCase()
+      minlength: 6,
+      maxlength: 6,
+      validate: {
+        validator: function(v) {
+          return /^[0-9]{6}$/.test(v);
+        },
+        message: 'Access code must be exactly 6 digits'
+      }
     },
     isActive: {
       type: Boolean,

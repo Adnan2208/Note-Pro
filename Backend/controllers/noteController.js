@@ -6,7 +6,7 @@ const User = require('../models/User');
 // @access  Private (requires valid access code)
 const createNote = async (req, res) => {
   try {
-    const { title, content, tags, isPinned } = req.body;
+    const { title, content, tags, isPinned, folderId } = req.body;
     const userId = req.userId;
 
     if (!title || !content) {
@@ -16,8 +16,21 @@ const createNote = async (req, res) => {
       });
     }
 
+    // Verify folder exists if provided
+    if (folderId) {
+      const Folder = require('../models/Folder');
+      const folder = await Folder.findOne({ _id: folderId, user: userId });
+      if (!folder) {
+        return res.status(404).json({
+          success: false,
+          message: 'Folder not found'
+        });
+      }
+    }
+
     const note = await Note.create({
       user: userId,
+      folder: folderId || null,
       title,
       content,
       tags: tags || [],

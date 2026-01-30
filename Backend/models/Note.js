@@ -7,6 +7,11 @@ const noteSchema = new mongoose.Schema(
       ref: 'User',
       required: true
     },
+    folder: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Folder',
+      default: null
+    },
     title: {
       type: String,
       required: true,
@@ -34,6 +39,6 @@ const noteSchema = new mongoose.Schema(
 );
 
 // Index for faster queries by user
-noteSchema.index({ user: 1, createdAt: -1 });
+noteSchema.index({ user: 1, folder: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Note', noteSchema);
