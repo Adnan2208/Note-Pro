@@ -5,7 +5,33 @@ const User = require('../models/User');
 // @access  Public
 const createAccessCode = async (req, res) => {
   try {
-    const user = await User.create({});
+    const { accessCode } = req.body;
+
+    if (!accessCode) {
+      return res.status(400).json({
+        success: false,
+        message: 'Access code is required'
+      });
+    }
+
+    // Validate 6 digits
+    if (!/^[0-9]{6}$/.test(accessCode)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Access code must be exactly 6 digits'
+      });
+    }
+
+    // Check if access code already exists
+    const existingUser = await User.findOne({ accessCode });
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: 'Access code already exists. Please choose a different one.'
+      });
+    }
+
+    const user = await User.create({ accessCode });
     
     res.status(201).json({
       success: true,

@@ -7,6 +7,11 @@ const noteSchema = new mongoose.Schema(
       ref: 'User',
       required: true
     },
+    folder: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Folder',
+      default: null
+    },
     title: {
       type: String,
       required: true,
@@ -17,6 +22,14 @@ const noteSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    images: [
+      {
+        id: String,
+        data: String, // Base64 encoded image
+        mimeType: String,
+        name: String
+      }
+    ],
     isPinned: {
       type: Boolean,
       default: false
@@ -34,6 +47,6 @@ const noteSchema = new mongoose.Schema(
 );
 
 // Index for faster queries by user
-noteSchema.index({ user: 1, createdAt: -1 });
+noteSchema.index({ user: 1, folder: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Note', noteSchema);
