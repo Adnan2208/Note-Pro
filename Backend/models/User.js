@@ -10,9 +10,9 @@ const userSchema = new mongoose.Schema(
       maxlength: 6,
       validate: {
         validator: function(v) {
-          return /^[0-9]{6}$/.test(v);
+          return /^[a-zA-Z0-9]{6}$/.test(v);
         },
-        message: 'Access code must be exactly 6 digits'
+        message: 'Access code must be exactly 6 alphanumeric characters'
       }
     },
     isActive: {

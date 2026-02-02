@@ -14,16 +14,16 @@ const createAccessCode = async (req, res) => {
       });
     }
 
-    // Validate 6 digits
-    if (!/^[0-9]{6}$/.test(accessCode)) {
+    // Validate 6 alphanumeric characters
+    if (!/^[a-zA-Z0-9]{6}$/.test(accessCode)) {
       return res.status(400).json({
         success: false,
-        message: 'Access code must be exactly 6 digits'
+        message: 'Access code must be exactly 6 alphanumeric characters'
       });
     }
 
-    // Check if access code already exists
-    const existingUser = await User.findOne({ accessCode });
+    // Check if access code already exists (case-insensitive)
+    const existingUser = await User.findOne({ accessCode: accessCode.toUpperCase() });
     if (existingUser) {
       return res.status(409).json({
         success: false,
@@ -31,7 +31,7 @@ const createAccessCode = async (req, res) => {
       });
     }
 
-    const user = await User.create({ accessCode });
+    const user = await User.create({ accessCode: accessCode.toUpperCase() });
     
     res.status(201).json({
       success: true,
