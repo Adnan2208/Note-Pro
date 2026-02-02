@@ -12,8 +12,8 @@ function AccessCode({ onAccessCodeValidated }) {
   const [successMessage, setSuccessMessage] = useState('');
 
   const handleCreateAccessCode = async () => {
-    if (!/^[0-9]{6}$/.test(newAccessCode)) {
-      setError('Access code must be exactly 6 digits');
+    if (!/^[a-zA-Z0-9]{6}$/.test(newAccessCode)) {
+      setError('Access code must be exactly 6 alphanumeric characters');
       return;
     }
 
@@ -45,8 +45,8 @@ function AccessCode({ onAccessCodeValidated }) {
       return;
     }
 
-    if (!/^[0-9]{6}$/.test(accessCode)) {
-      setError('Access code must be exactly 6 digits');
+    if (!/^[a-zA-Z0-9]{6}$/.test(accessCode)) {
+      setError('Access code must be exactly 6 alphanumeric characters');
       return;
     }
 
@@ -68,12 +68,12 @@ function AccessCode({ onAccessCodeValidated }) {
   };
 
   const handleAccessCodeChange = (e) => {
-    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+    const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6);
     setAccessCode(value);
   };
 
   const handleNewAccessCodeChange = (e) => {
-    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+    const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6);
     setNewAccessCode(value);
   };
 
@@ -127,7 +127,7 @@ function AccessCode({ onAccessCodeValidated }) {
             <form onSubmit={handleAccessCodeSubmit} className="space-y-5">
               <div>
                 <label htmlFor="accessCode" className="block text-sm font-medium text-gray-700 mb-2">
-                  Access Code (6 digits)
+                  Access Code (6 characters)
                 </label>
                 <div className="relative">
                   <input
@@ -137,6 +137,7 @@ function AccessCode({ onAccessCodeValidated }) {
                     onChange={handleAccessCodeChange}
                     placeholder="••••••"
                     maxLength={6}
+                    autoComplete="off"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-black transition-colors font-mono text-2xl tracking-[0.5em] text-center pr-12"
                     disabled={isLoading}
                   />
@@ -158,7 +159,7 @@ function AccessCode({ onAccessCodeValidated }) {
                   </button>
                 </div>
                 <p className="text-xs text-gray-400 mt-2 text-center">
-                  {accessCode.length}/6 digits
+                  {accessCode.length}/6 characters
                 </p>
               </div>
               <button
@@ -184,7 +185,7 @@ function AccessCode({ onAccessCodeValidated }) {
             <div className="space-y-5">
               <div>
                 <label htmlFor="newAccessCode" className="block text-sm font-medium text-gray-700 mb-2">
-                  Create Your Access Code (6 digits)
+                  Create Your Access Code (6 characters)
                 </label>
                 <div className="relative">
                   <input
@@ -194,6 +195,7 @@ function AccessCode({ onAccessCodeValidated }) {
                     onChange={handleNewAccessCodeChange}
                     placeholder="••••••"
                     maxLength={6}
+                    autoComplete="off"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-black transition-colors font-mono text-2xl tracking-[0.5em] text-center pr-12"
                     disabled={isLoading}
                   />
@@ -215,7 +217,7 @@ function AccessCode({ onAccessCodeValidated }) {
                   </button>
                 </div>
                 <p className="text-xs text-gray-400 mt-2 text-center">
-                  {newAccessCode.length}/6 digits
+                  {newAccessCode.length}/6 characters
                 </p>
               </div>
               <button
@@ -241,7 +243,7 @@ function AccessCode({ onAccessCodeValidated }) {
 
         {/* Footer */}
         <p className="text-center text-gray-400 text-sm mt-8">
-          Your notes are secured with your unique 6-digit access code
+          Your notes are secured with your unique 6-character access code
         </p>
       </div>
     </div>
