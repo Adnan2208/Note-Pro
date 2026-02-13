@@ -14,6 +14,7 @@ function Notes({ accessCode, onLogout }) {
   // Editor states
   const [showEditor, setShowEditor] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
+  const [isOpeningNote, setIsOpeningNote] = useState(false);
   
   // Folder modal states
   const [showFolderModal, setShowFolderModal] = useState(false);
@@ -208,9 +209,29 @@ function Notes({ accessCode, onLogout }) {
     }
   };
 
-  const openNoteEditor = (note = null) => {
-    setEditingNote(note);
-    setShowEditor(true);
+  const openNoteEditor = async (note = null) => {
+    // New note flow
+    if (!note) {
+      setEditingNote(null);
+      setShowEditor(true);
+      return;
+    }
+
+    // Existing note flow - fetch full note only when clicked
+    try {
+      setIsOpeningNote(true);
+      const response = await notesApi.getNoteById(accessCode, note._id);
+      if (response.success) {
+        setEditingNote(response.note);
+        setShowEditor(true);
+      } else {
+        setError(response.message || 'Failed to open note');
+      }
+    } catch (err) {
+      setError('Failed to open note');
+    } finally {
+      setIsOpeningNote(false);
+    }
   };
 
   const closeNoteEditor = () => {
@@ -298,6 +319,7 @@ function Notes({ accessCode, onLogout }) {
             </button>
             <button
               onClick={() => openNoteEditor()}
+              disabled={isOpeningNote}
               className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -389,6 +411,7 @@ function Notes({ accessCode, onLogout }) {
                   </div>
                   <button
                     onClick={() => openNoteEditor(note)}
+                    disabled={isOpeningNote}
                     className="text-black hover:underline font-medium truncate"
                   >
                     {note.title}
@@ -410,6 +433,7 @@ function Notes({ accessCode, onLogout }) {
                   </button>
                   <button
                     onClick={() => openNoteEditor(note)}
+                    disabled={isOpeningNote}
                     className="p-1 text-gray-400 hover:text-black transition-colors"
                     title="Edit"
                   >

@@ -100,7 +100,7 @@ const getAllFolders = async (req, res) => {
   }
 };
 
-// @desc    Get folder contents (subfolders and notes)
+// @desc    Get folder contents (subfolders and note summaries)
 // @route   GET /api/folders/:id/contents
 // @access  Private
 const getFolderContents = async (req, res) => {
@@ -117,11 +117,13 @@ const getFolderContents = async (req, res) => {
       parent: parentQuery 
     }).sort({ name: 1 });
 
-    // Get notes in this folder
+    // Get note summaries in this folder (full note loads on note click)
     const notes = await Note.find({ 
       user: userId, 
       folder: parentQuery 
-    }).sort({ isPinned: -1, createdAt: -1 });
+    })
+      .select('_id title isPinned folder createdAt updatedAt')
+      .sort({ isPinned: -1, createdAt: -1 });
 
     // Get current folder info (if not root)
     let currentFolder = null;

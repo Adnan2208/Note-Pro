@@ -106,6 +106,18 @@ export const notesApi = {
     return response.json();
   },
 
+  // Get a single note by ID
+  getNoteById: async (accessCode, noteId) => {
+    const response = await fetch(`${API_BASE_URL}/notes/${noteId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-access-code': accessCode,
+      },
+    });
+    return response.json();
+  },
+
   // Create a new note
   createNote: async (accessCode, noteData) => {
     const response = await fetch(`${API_BASE_URL}/notes`, {
